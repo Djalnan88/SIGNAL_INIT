@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGNAL_INIT // CANDIDATE_SCREENING_SYSTEM</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="terminal-container">
+        <div id="status-bar">
+            <div id="progress-container">
+                <span class="label">ANALYSIS_PROGRESS:</span>
+                <div id="progress-bar">
+                    <div id="progress-fill"></div>
+                </div>
+                <span id="progress-percentage">0%</span>
+            </div>
+            <div id="system-info">
+                <span class="glitch" data-text="SIGNAL_INIT_v1.0.4">SIGNAL_INIT_v1.0.4</span>
+            </div>
+        </div>
+
+        <div id="terminal-output"></div>
+
+        <div id="input-line">
+            <span class="prompt"> guest@SIGNAL_404:~$ </span>
+            <input type="text" id="command-input" autofocus autocomplete="off" spellcheck="false">
+        </div>
+    </div>
+
+    <!-- Mystery interaction elements (initially hidden) -->
+    <!-- hint: root password is hidden in plain sight. password: binary -->
+    <button id="hidden-interface-btn" style="display: none;" disabled>ACCESS_DENIED</button>
+
+    <script src="game.js"></script>
+</body>
+
+</html>
