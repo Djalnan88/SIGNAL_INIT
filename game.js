@@ -2,14 +2,15 @@ const terminalOutput = document.getElementById('terminal-output');
 const commandInput = document.getElementById('command-input');
 const progressFill = document.getElementById('progress-fill');
 const progressPercentage = document.getElementById('progress-percentage');
-const hiddenBtn = document.getElementById('hidden-interface-btn');
+const promptText = document.querySelector('.prompt');
 
 // --- Game State ---
 const gameState = {
     playerName: "",
     progress: 0,
-    stage: 0, // 0: Init, 1: Id, 2: Decode...
-    isTyping: false
+    stage: 0,
+    isTyping: false,
+    stage1Fails: 0
 };
 
 // --- Utilities ---
@@ -22,7 +23,11 @@ async function typePrint(text, speed = 25, color = '') {
     terminalOutput.appendChild(line);
 
     for (const char of text) {
-        line.innerHTML += char;
+        if (char === '\n') {
+            line.innerHTML += '<br>';
+        } else {
+            line.innerHTML += char === ' ' ? '&nbsp;' : char;
+        }
         terminalOutput.scrollTop = terminalOutput.scrollHeight;
         await sleep(speed);
     }
@@ -33,7 +38,7 @@ async function typePrint(text, speed = 25, color = '') {
 function instantPrint(text, color = '') {
     const line = document.createElement('div');
     if (color) line.style.color = color;
-    line.innerHTML = text;
+    line.innerHTML = text.replace(/\n/g, '<br>').replace(/  /g, '&nbsp;&nbsp;');
     terminalOutput.appendChild(line);
     terminalOutput.scrollTop = terminalOutput.scrollHeight;
 }
@@ -44,20 +49,31 @@ function setProgress(value) {
     progressPercentage.innerText = `${gameState.progress}%`;
 }
 
+function updatePrompt(stageNum) {
+    if (stageNum === 0) {
+        promptText.innerText = ` guest@SIGNAL_INIT:~$ `;
+    } else if (typeof stageNum === 'string') {
+        promptText.innerText = ` ${gameState.playerName}@${stageNum}:~$ `;
+    } else {
+        promptText.innerText = ` ${gameState.playerName}@STAGE_${stageNum}:~$ `;
+    }
+}
+
 // --- Stages Implementation ---
 
 async function stage0_Init() {
+    updatePrompt(0);
     await typePrint(">> BOOTING_INTERFACE...", 10);
-    await sleep(500);
+    await sleep(400);
     await typePrint(">> INITIALIZING_MEMORY_CORE...", 10);
     await sleep(300);
     await typePrint(">> LOADING_SIGNAL_ANALYSIS_MODULE...", 10);
-    await sleep(800);
+    await sleep(600);
     setProgress(5);
-    
+
     await typePrint("\n[SYSTEM] Unknown signal detected from OUTSIDE_NETWORK.", 20);
     await typePrint("[SYSTEM] Connection requires manual identification.", 20);
-    await typePrint("\nPLEASE IDENTIFY YOURSELF.", 30, '#ffcc00');
+    await typePrint("\nPLEASE IDENTIFY YOURSELF (Enter your name):", 30, '#ffcc00');
 }
 
 async function handleCommand(cmd) {
@@ -69,112 +85,123 @@ async function handleCommand(cmd) {
 
     switch (gameState.stage) {
         case 0: // Identification
-            gameState.playerName = cmd;
+            if (!command) {
+                instantPrint("Name cannot be empty.", '#ff3333');
+                return;
+            }
+            gameState.playerName = cmd.replace(/[^a-zA-Z0-9가-힣_-]/g, '');
+            if (!gameState.playerName) gameState.playerName = "guest";
             gameState.stage = 1;
-            setProgress(10);
+            setProgress(15);
+            updatePrompt(1);
+
             await typePrint(`\nWelcome, ${gameState.playerName}.`, 30);
-            await typePrint("[LOG] Creating temporal profile for analysis...", 10);
             await sleep(500);
-            await typePrint("\n[ALERT] ACCESS_DENIED.", 30, '#ff3333');
-            await typePrint("Current credentials lack sufficient privileges to analyze signal.", 20);
-            await typePrint("Type 'help' to see available commands.", 20);
+            await typePrint("\n[STAGE 1: INTERCEPTED SIGNAL]", 30, '#00ff88');
+            await typePrint("We intercepted a basic encrypted transmission.", 20);
+            await typePrint("Decrypt the following message to proceed:\n", 20);
+            instantPrint("  KHOOR ZRUOG\n", '#ffcc00');
+            await typePrint("Enter decrypted message:", 20);
             break;
 
-        case 1: // Login/Help stage
-            if (command === 'help') {
-                instantPrint("\nAvailable local commands:");
-                instantPrint("- whoami : Check current user profile");
-                instantPrint("- ls     : List available system logs");
-                instantPrint("- connect: Establish relay connection (RESTRICTED)");
-            } else if (command === 'whoami') {
-                await typePrint(`\nUSER: ${gameState.playerName}\nROLE: GUEST_OBSERVER\nLEVEL: 0`, 20);
-            } else if (command === 'ls') {
-                instantPrint("\n[FILE] access.log");
-                instantPrint("[FILE] sys_config.json");
-            } else if (command === 'connect') {
-                await typePrint("\nAttempting connection...", 30);
-                await sleep(1000);
-                await typePrint("[FAILED] Error 403: HIDDEN_IN_PLAIN_SIGHT.", 30, '#ff3333');
-            } else if (command === 'binary') { 
+        case 1: // Caesar Cipher (Answer: hello world)
+            if (command === 'hello world' || command === 'helloworld') {
                 gameState.stage = 2;
-                setProgress(20);
-                await typePrint("\n[SUCCESS] HIDDEN_PASSWORD_ACCEPTED.", 30, '#00ff88');
-                await typePrint("Relay connection established. incoming signal stream starting...", 20);
-                await sleep(1000);
-                await typePrint("\nINCOMING_DATA: U09VUkNFX0ZPVU5E", 40, '#ffcc00'); 
-                await typePrint("HINT: The signal looks encoded (Base64).", 20);
-            } else {
-                instantPrint(`\nCommand not found: ${cmd}`, '#ff3333');
-            }
-            break;
-            
-        case 2: // Decoding Stage
-            if (command === 'source_found') {
-                gameState.stage = 3;
-                setProgress(40);
-                await typePrint("\n[SIGNAL_FRAGMENT_DECODED]", 30, '#00ff88');
-                await typePrint("Origin: RECV_BUFFER_0x24", 20);
+                setProgress(35);
+                updatePrompt(2);
+                await typePrint("\n[SUCCESS] Signal decrypted.", 30, '#00ff88');
                 await sleep(500);
-                await typePrint("\n[SYSTEM] Interface corruption detected.", 20, '#ffcc00');
-                await typePrint("[ERROR] Interactive elements disabled by external override.", 20, '#ff3333');
-                
-                hiddenBtn.style.display = 'block';
-                await typePrint("\n>> MANUAL_OVERRIDE_REQUIRED.", 30);
-                await typePrint("HINT: Inspect the 'interface' for manual control attributes. (Look for 'disabled' property)", 20);
+
+                await typePrint("\n[STAGE 2: LOGIC GATE]", 30, '#00ff88');
+                await typePrint("We need to identify the Frontend Developer among 3 suspects.", 20);
+                await sleep(300);
+                instantPrint("\n[Suspect Statements]");
+                instantPrint("A: I am the Frontend Developer.");
+                instantPrint("B: I am NOT the Frontend Developer.");
+                instantPrint("C: B is lying.\n");
+                await typePrint("Condition: Only ONE suspect is telling the truth.", 20, '#ffcc00');
+                await typePrint("\nWho is the real Frontend Developer? (a/b/c):", 20);
             } else {
-                instantPrint("\nInvalid key. Keep decoding.", '#ff3333');
+                gameState.stage1Fails++;
+                instantPrint("\n[ERROR] Incorrect decryption.", '#ff3333');
+                if (gameState.stage1Fails >= 3) {
+                    instantPrint("\nHINT: Caesar Cipher +3 (Shift letters back by 3)", '#ffaa00');
+                }
             }
             break;
 
-        case 3: // Stage 3 is handled by the button click
-            instantPrint("\nInterface is locked. Manual override required.", '#ff3333');
-            break;
+        case 2: // Logic Puzzle (Answer: c)
+            if (command === 'c') {
+                gameState.stage = 3;
+                setProgress(60);
+                updatePrompt(3);
+                await typePrint("\n[SUCCESS] Logic gate bypassed.", 30, '#00ff88');
+                await sleep(500);
 
-        case 4: // Network Tracking / Reverse key
-            if (command === 'em esrever' || command === 'reverse me') {
-                gameState.stage = 5;
-                setProgress(80);
-                await typePrint("\n[SUCCESS] ORIGIN_TRACED: LOCALHOST.", 30, '#00ff88');
-                await typePrint("\nWait... if the signal is coming from LOCALHOST...", 40, '#ffcc00');
-                await sleep(1000);
-                await typePrint("This is not a signal from space.", 30);
-                await sleep(1000);
-                await typePrint("This is a test.", 30);
-                await sleep(1000);
-                await typePrint("\n[SYSTEM] FINAL_VERIFICATION_REQUIRED.", 20);
-                await typePrint("Reconstruct path through memory maze.", 20);
-                instantPrint("\n S . . # ");
-                instantPrint(" # . # . ");
-                instantPrint(" . . . E ");
-                await typePrint("\nEnter shortest path length:", 30, '#ffcc00');
+                await typePrint("\n[STAGE 3: UNAUTHORIZED MERGE]", 30, '#00ff88');
+                await typePrint("Someone force-pushed to the main branch! Find the culprit.", 20);
+                await sleep(300);
+                instantPrint("\n[Log Statements]");
+                instantPrint("A: D did it.");
+                instantPrint("B: I didn't do it.");
+                instantPrint("C: A is telling the truth.");
+                instantPrint("D: A is lying.\n");
+                await typePrint("Condition: Only ONE person is LYING.", 20, '#ffcc00');
+                await typePrint("\nWho is the culprit? (a/b/c/d):", 20);
+            } else if (['a', 'b'].includes(command)) {
+                instantPrint("\n[ERROR] Logic mismatch. Try again.", '#ff3333');
             } else {
-                instantPrint("\nTrace failed. Key mismatch.", '#ff3333');
+                instantPrint("\nPlease enter a, b, or c.", '#ff3333');
             }
             break;
 
-        case 5: // Final Algorithm Puzzle
+        case 3: // Git Merge Puzzle (Answer: d)
+            if (command === 'd') {
+                gameState.stage = 4;
+                setProgress(85);
+                updatePrompt(4);
+                await typePrint("\n[SUCCESS] Culprit identified.", 30, '#00ff88');
+                await sleep(500);
+
+                await typePrint("\n[STAGE 4: DATA ROUTING]", 30, '#00ff88');
+                await typePrint("Find the shortest path length from S to E.", 20);
+                await typePrint("You can only move up, down, left, or right. Walls are '#'.", 20);
+                await sleep(300);
+                instantPrint("\n [MAP]");
+                instantPrint(" S  .  .  #");
+                instantPrint(" #  .  #  .");
+                instantPrint(" .  .  .  E\n", '#ffcc00');
+                await typePrint("Enter the shortest number of steps (counting blocks, including S and E):", 20);
+            } else if (['a', 'b', 'c'].includes(command)) {
+                instantPrint("\n[ERROR] Incorrect suspect. Try again.", '#ff3333');
+            } else {
+                instantPrint("\nPlease enter a, b, c, or d.", '#ff3333');
+            }
+            break;
+
+        case 4: // Shortest Path (Answer: 5)
             if (command === '5') {
                 setProgress(100);
+                updatePrompt("CLEARED");
                 await typePrint("\n[SIGNAL_DECODE_COMPLETE]", 40, '#00ff88');
                 await sleep(1000);
                 await typePrint("\nSUCCESS.", 30);
                 await sleep(500);
-                await typePrint(`Welcome, ${gameState.playerName}.`, 30);
-                await typePrint("You are not just a receiver.", 30);
-                await typePrint("You are a builder.", 30);
-                await sleep(2000);
-                
+                await typePrint(`Welcome to the inner network, ${gameState.playerName}.`, 30);
+                await typePrint("You have proven your logical and analytical skills.", 30);
+                await sleep(2500);
+
                 // Final Reveal
                 terminalOutput.innerHTML = "";
-                await typePrint("SIGNAL SOURCE FOUND: [BLACKWIND_DEV_CLUB]", 10, '#00ff88');
-                await typePrint("\n우리는 정체불명의 신호를 해독할 수 있는 당신 같은 사람을 기다리고 있었습니다.", 20);
-                await typePrint("코드로 세상을 바꾸고 싶은가요? 논리로 한계를 시험하고 싶은가요?", 20);
-                await typePrint("\n[ACCESS GRANTED] 동아리 지원 페이지로 이동합니다...", 20);
-                
+                await typePrint("SIGNAL SOURCE FOUND: [BLACKWIND]\n", 10, '#00ff88');
+                await typePrint("우리는 정체불명의 신호를 해독할 수 있는 당신 같은 사람을 기다리고 있었습니다.", 20);
+                await typePrint("코드로 세상을 바꾸고 싶은가요? 함께 한계를 시험하고 싶은가요?\n", 20);
+                await typePrint("[ACCESS GRANTED] 동아리 지원 페이지로 이동합니다...", 20, '#ffcc00');
+
                 await sleep(3000);
-                window.location.href = "https://www.notion.so/blackwind/f35c28b6d9b34f4b9a8fa509fe8e7aab"; // Placeholder for real link
+                window.open("https://www.notion.so/blackwind/f35c28b6d9b34f4b9a8fa509fe8e7aab", "_blank");
             } else {
-                instantPrint("\nIncorrect path length.", '#ff3333');
+                instantPrint("\n[ERROR] Path calculation failed. Try again.", '#ff3333');
             }
             break;
     }
@@ -185,19 +212,6 @@ commandInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         const cmd = commandInput.value;
         if (cmd) handleCommand(cmd);
-    }
-});
-
-hiddenBtn.addEventListener('click', async () => {
-    if (gameState.stage === 3) {
-        hiddenBtn.style.display = 'none';
-        gameState.stage = 4;
-        setProgress(60);
-        await typePrint("\n[SUCCESS] Override active. Deep layer analysis starting...", 30, '#00ff88');
-        await typePrint("[LOG] Analyzing network traffic...", 10);
-        await sleep(1000);
-        await typePrint("\nTRACE_RESULT: Found potential key in response header.", 20);
-        await typePrint("HINT: 'reverse me'", 20, '#ffcc00');
     }
 });
 
