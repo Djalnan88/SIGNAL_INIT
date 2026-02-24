@@ -170,8 +170,8 @@ async function handleCommand(cmd) {
                 instantPrint("\n [MAP]");
                 instantPrint(" S  .  .  #");
                 instantPrint(" #  .  #  .");
-                instantPrint(" .  .  .  E\n", '#ffcc00');
-                await typePrint("Enter the shortest number of steps.:", 20);
+                instantPrint(" .  .  .  E\n");
+                await typePrint("Enter the shortest number of steps.:", 20, '#ffcc00');
             } else if (['a', 'b', 'c'].includes(command)) {
                 instantPrint("\n[ERROR] Incorrect suspect. Try again.", '#ff3333');
             } else {
