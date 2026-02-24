@@ -171,7 +171,7 @@ async function handleCommand(cmd) {
                 instantPrint(" S  .  .  #");
                 instantPrint(" #  .  #  .");
                 instantPrint(" .  .  .  E\n", '#ffcc00');
-                await typePrint("Enter the shortest number of steps (counting blocks, including S and E):", 20);
+                await typePrint("Enter the shortest number of steps.:", 20);
             } else if (['a', 'b', 'c'].includes(command)) {
                 instantPrint("\n[ERROR] Incorrect suspect. Try again.", '#ff3333');
             } else {
