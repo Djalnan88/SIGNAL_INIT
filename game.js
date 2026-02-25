@@ -199,7 +199,7 @@ async function handleCommand(cmd) {
                 await typePrint("[ACCESS GRANTED] 동아리 지원 페이지로 이동합니다...", 20, '#ffcc00');
 
                 await sleep(3000);
-                window.open("https://www.notion.so/blackwind/f35c28b6d9b34f4b9a8fa509fe8e7aab", "_blank");
+                window.open("https://blackwind.notion.site/2026-3125ca18909b80548985cda5fb0a9f85", "_blank");
             } else {
                 instantPrint("\n[ERROR] Path calculation failed. Try again.", '#ff3333');
             }
@@ -222,3 +222,4 @@ document.addEventListener('click', () => {
 
 // --- Boot Game ---
 stage0_Init();
+
